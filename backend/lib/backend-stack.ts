@@ -40,5 +40,11 @@ export class BackendStack extends cdk.Stack {
 				resources: [destinationImagesBucket.fileStorageBucket.bucketArn + '/*'],
 			})
 		)
+
+		new cdk.CfnOutput(this, 'cloudfrontDistURL', {
+			value:
+				destinationImagesBucket.fileStorageBucketCFDistribution
+					.distributionDomainName,
+		})
 	}
 }
