@@ -34,7 +34,7 @@ export class BackendStack extends cdk.Stack {
 		)
 
 		// add policy so function can write to destination bucket
-		destinationImagesBucket.fileStorageBucket.addToResourcePolicy(
+		resizeImageFunc.addToRolePolicy(
 			new cdk.aws_iam.PolicyStatement({
 				actions: ['s3:PutObject'],
 				resources: [destinationImagesBucket.fileStorageBucket.bucketArn + '/*'],
