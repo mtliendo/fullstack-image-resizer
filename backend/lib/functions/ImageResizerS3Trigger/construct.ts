@@ -27,6 +27,9 @@ export const createResizeImageFunc = (
 			handler: 'handler',
 			entry: path.join(__dirname, `./main.ts`),
 			layers: [sharpLayer],
+			bundling: {
+				externalModules: ['sharp'],
+			},
 		}
 	)
 
