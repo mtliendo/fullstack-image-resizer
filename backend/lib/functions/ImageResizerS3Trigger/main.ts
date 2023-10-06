@@ -31,7 +31,7 @@ async function resizeAndUpload(
 		.png({ quality: 85 })
 		.toBuffer()
 
-	const newKey = key.replace(/(\.\w+)$/, `-${suffix}$1`)
+	const newKey = key.replace(/(\.\w+)$/, `_${suffix}$1`)
 
 	await s3Client.send(
 		new PutObjectCommand({

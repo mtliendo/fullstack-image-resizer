@@ -16,7 +16,7 @@ export function createResizedImagesBucket(scope: Construct) {
 		`cloudfront-for-resized-images-CDN`,
 		{
 			defaultBehavior: {
-				origin: new S3Origin(fileStorageBucket, { originPath: '/public' }),
+				origin: new S3Origin(fileStorageBucket),
 				cachePolicy: CachePolicy.CACHING_OPTIMIZED,
 				allowedMethods: AllowedMethods.ALLOW_GET_HEAD,
 				cachedMethods: AllowedMethods.ALLOW_GET_HEAD,

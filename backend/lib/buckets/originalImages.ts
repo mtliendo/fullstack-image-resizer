@@ -1,7 +1,8 @@
 import { Construct } from 'constructs'
 import * as s3 from 'aws-cdk-lib/aws-s3'
 import * as iam from 'aws-cdk-lib/aws-iam'
-import { Function } from 'aws-cdk-lib/aws-lambda'
+import { LifecycleRuleFilter } from '@aws-sdk/client-s3'
+import { Duration } from 'aws-cdk-lib'
 
 type CreateOriginalImagesBucketProps = {
 	authenticatedRole: iam.IRole
@@ -26,6 +27,8 @@ export function createOriginalImagesBucket(
 			},
 		],
 	})
+
+	fileStorageBucket.addLifecycleRule({ expiration: Duration.days(60) })
 
 	// Let signed in users Upload on their own objects in a protected directory
 	const canUpdateFromOwnProtectedDirectory = new iam.PolicyStatement({
