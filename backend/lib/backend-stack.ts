@@ -42,6 +42,14 @@ export class BackendStack extends cdk.Stack {
 			destinationImagesBucket.fileStorageBucket.bucketName
 		)
 
+		// add policy so function can get image from source bucket
+		resizeImageFunc.addToRolePolicy(
+			new cdk.aws_iam.PolicyStatement({
+				actions: ['s3:GetObject'],
+				resources: [originalImagesBucket.bucketArn + '/*'],
+			})
+		)
+
 		// add policy so function can write to destination bucket
 		resizeImageFunc.addToRolePolicy(
 			new cdk.aws_iam.PolicyStatement({
