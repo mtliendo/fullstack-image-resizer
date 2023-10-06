@@ -1,3 +1,4 @@
+import { Duration } from 'aws-cdk-lib'
 import { LayerVersion, Runtime } from 'aws-cdk-lib/aws-lambda'
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs'
 import { Construct } from 'constructs'
@@ -22,6 +23,8 @@ export const createResizeImageFunc = (
 		{
 			functionName: `${props.appName}-resizeImageFunc`,
 			runtime: Runtime.NODEJS_18_X,
+			timeout: Duration.seconds(10),
+			memorySize: 256,
 			handler: 'handler',
 			entry: path.join(__dirname, `./main.ts`),
 			layers: [sharpLayer],

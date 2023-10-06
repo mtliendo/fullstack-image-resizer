@@ -3,11 +3,45 @@ import {
 	GetObjectCommand,
 	PutObjectCommand,
 } from '@aws-sdk/client-s3'
+import { Stream } from 'stream'
 
 const Sharp = require('sharp')
 
 // Create the S3 client
 const s3Client = new S3Client({ region: 'us-east-1' })
+
+function streamToBuffer(stream: Stream): Promise<Buffer> {
+	return new Promise((resolve, reject) => {
+		const chunks: Buffer[] = []
+		stream.on('data', (chunk: Buffer) => chunks.push(chunk))
+		stream.on('error', reject)
+		stream.on('end', () => resolve(Buffer.concat(chunks)))
+	})
+}
+
+async function resizeAndUpload(
+	imageBuffer: Buffer,
+	bucket: string,
+	key: string,
+	size: number,
+	suffix: string
+) {
+	const resizedImage = await Sharp(imageBuffer)
+		.resize(size)
+		.png({ quality: 85 })
+		.toBuffer()
+
+	const newKey = key.replace(/(\.\w+)$/, `-${suffix}$1`)
+
+	await s3Client.send(
+		new PutObjectCommand({
+			Bucket: bucket,
+			Key: newKey,
+			Body: resizedImage,
+			ContentType: 'image/png',
+		})
+	)
+}
 
 exports.handler = async (event: any) => {
 	const bucket = event.Records[0].s3.bucket.name
@@ -15,40 +49,48 @@ exports.handler = async (event: any) => {
 		event.Records[0].s3.object.key.replace(/\+/g, ' ')
 	)
 
-	const input = {
-		Bucket: bucket,
-		Key: key,
+	if (!process.env.OUTPUT_BUCKET_NAME) {
+		throw new Error('Output bucket name not set in environment variables')
 	}
 
-	const originalImage = await s3Client.send(new GetObjectCommand(input))
+	const { Body } = await s3Client.send(
+		new GetObjectCommand({ Bucket: bucket, Key: key })
+	)
 
-	// Define sizes for thumbnail, medium, and large images
-	const sizes = [
-		{ suffix: 'thumbnail', width: 100 },
-		{ suffix: 'medium', width: 500 },
-		{ suffix: 'large', width: 1000 },
-	]
+	if (!Body) {
+		throw new Error('No body in S3 response')
+	}
 
-	const uploads = sizes.map(async (size) => {
-		const resizedImage = await Sharp(originalImage.Body)
-			.resize(size.width)
-			.png({ quality: 85 }) // Convert to PNG with 85% quality
-			.toBuffer()
+	if (!(Body instanceof Stream)) {
+		throw new Error('Expected Body to be an instance of Stream')
+	}
 
-		const newKey = key.replace(/(\.\w+)$/, `-${size.suffix}$1`)
+	const imageBuffer = await streamToBuffer(Body)
 
-		await s3Client.send(
-			new PutObjectCommand({
-				Bucket: process.env.OUTPUT_BUCKET_NAME,
-				Key: newKey,
-				Body: resizedImage,
-				ContentType: 'image/png',
-			})
-		)
-	})
-
-	// Wait for all uploads to finish
-	await Promise.all(uploads)
+	// Resize and upload concurrently
+	await Promise.all([
+		resizeAndUpload(
+			imageBuffer,
+			process.env.OUTPUT_BUCKET_NAME,
+			key,
+			100,
+			'thumbnail'
+		),
+		resizeAndUpload(
+			imageBuffer,
+			process.env.OUTPUT_BUCKET_NAME,
+			key,
+			200,
+			'medium'
+		),
+		resizeAndUpload(
+			imageBuffer,
+			process.env.OUTPUT_BUCKET_NAME,
+			key,
+			500,
+			'large'
+		),
+	])
 
 	return {
 		statusCode: 200,
