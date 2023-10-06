@@ -1,16 +1,44 @@
+import { createResizeImageFunc } from './functions/ImageResizerS3Trigger/construct'
 import * as cdk from 'aws-cdk-lib'
 import { Construct } from 'constructs'
+import { createOriginalImagesBucket } from './buckets/originalImages'
+import { createResizeImageAuth } from './auth/cognito'
+import { createResizedImagesBucket } from './buckets/resizedImages'
 
 export class BackendStack extends cdk.Stack {
 	constructor(scope: Construct, id: string, props?: cdk.StackProps) {
 		super(scope, id, props)
-
-		//add function
+		const appName = 'recipe-example'
 
 		// add auth
+		const cognito = createResizeImageAuth(this, {
+			appName,
+		})
 
 		// add buckets
+		const originalImagesBucket = createOriginalImagesBucket(this, {
+			authenticatedRole: cognito.identityPool.authenticatedRole,
+		})
+
+		//add function
+		const resizeImageFunc = createResizeImageFunc(this, {
+			appName,
+		})
+
+		const destinationImagesBucket = createResizedImagesBucket(this)
 
 		// add envvars to function
+		resizeImageFunc.addEnvironment(
+			'OUTPUT_BUCKET_NAME',
+			destinationImagesBucket.fileStorageBucket.bucketName
+		)
+
+		// add policy so function can write to destination bucket
+		destinationImagesBucket.fileStorageBucket.addToResourcePolicy(
+			new cdk.aws_iam.PolicyStatement({
+				actions: ['s3:PutObject'],
+				resources: [destinationImagesBucket.fileStorageBucket.bucketArn + '/*'],
+			})
+		)
 	}
 }

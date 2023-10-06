@@ -8,7 +8,7 @@ import {
 } from 'aws-cdk-lib/aws-cloudfront'
 import { S3Origin } from 'aws-cdk-lib/aws-cloudfront-origins'
 
-export function createSaasPicsBucket(scope: Construct) {
+export function createResizedImagesBucket(scope: Construct) {
 	const fileStorageBucket = new s3.Bucket(scope, `ResizedImagesBucket`)
 
 	const fileStorageBucketCFDistribution = new Distribution(

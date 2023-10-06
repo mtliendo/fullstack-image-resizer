@@ -4,11 +4,9 @@ import {
 	IdentityPool,
 	UserPoolAuthenticationProvider,
 } from '@aws-cdk/aws-cognito-identitypool-alpha'
-import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs'
 
 type CreateResizeImageAuth = {
 	appName: string
-	addUserPostConfirmation: NodejsFunction
 }
 
 export function createResizeImageAuth(
@@ -18,9 +16,6 @@ export function createResizeImageAuth(
 	const userPool = new awsCognito.UserPool(scope, `${props.appName}-userpool`, {
 		userPoolName: `${props.appName}-userpool`,
 		selfSignUpEnabled: true,
-		lambdaTriggers: {
-			postConfirmation: props.addUserPostConfirmation,
-		},
 		accountRecovery: awsCognito.AccountRecovery.PHONE_AND_EMAIL,
 		userVerification: {
 			emailStyle: awsCognito.VerificationEmailStyle.CODE,

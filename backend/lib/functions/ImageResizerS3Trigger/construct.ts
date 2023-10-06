@@ -6,7 +6,6 @@ import { Construct } from 'constructs'
 import * as path from 'path'
 
 type CreateResizeImageFuncProps = {
-	s3bucket: Bucket
 	appName: string
 }
 export const createResizeImageFunc = (
@@ -29,13 +28,6 @@ export const createResizeImageFunc = (
 			entry: path.join(__dirname, `./main.ts`),
 			layers: [sharpLayer],
 		}
-	)
-
-	resizeImageFunc.addToRolePolicy(
-		new aws_iam.PolicyStatement({
-			actions: ['s3:PutObject'],
-			resources: [props.s3bucket.bucketArn],
-		})
 	)
 
 	return resizeImageFunc
