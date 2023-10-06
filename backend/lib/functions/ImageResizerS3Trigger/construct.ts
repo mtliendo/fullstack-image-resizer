@@ -1,7 +1,5 @@
-import * as aws_iam from 'aws-cdk-lib/aws-iam'
 import { LayerVersion, Runtime } from 'aws-cdk-lib/aws-lambda'
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs'
-import { Bucket } from 'aws-cdk-lib/aws-s3'
 import { Construct } from 'constructs'
 import * as path from 'path'
 

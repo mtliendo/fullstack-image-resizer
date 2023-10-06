@@ -4,6 +4,8 @@ import { Construct } from 'constructs'
 import { createOriginalImagesBucket } from './buckets/originalImages'
 import { createResizeImageAuth } from './auth/cognito'
 import { createResizedImagesBucket } from './buckets/resizedImages'
+import { EventType } from 'aws-cdk-lib/aws-s3'
+import { LambdaDestination } from 'aws-cdk-lib/aws-s3-notifications'
 
 export class BackendStack extends cdk.Stack {
 	constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -26,6 +28,13 @@ export class BackendStack extends cdk.Stack {
 		})
 
 		const destinationImagesBucket = createResizedImagesBucket(this)
+
+		// add function as trigger to original bucket
+		originalImagesBucket.addEventNotification(
+			EventType.OBJECT_CREATED,
+			new LambdaDestination(resizeImageFunc),
+			{ prefix: 'protected' }
+		)
 
 		// add envvars to function
 		resizeImageFunc.addEnvironment(
